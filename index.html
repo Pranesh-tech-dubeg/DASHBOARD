@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#070b12" />
+  <title>WasteWatch | Industrial IoT Smart Waste Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar" aria-label="Main navigation">
+    <a class="brand" href="#overview">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="#1d4ed8"/>
+          <path d="M8 22 L16 8 L24 22 Z" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round"/>
+          <circle cx="16" cy="22" r="3" fill="#60a5fa"/>
+          <line x1="10" y1="18" x2="22" y2="18" stroke="#93c5fd" stroke-width="1.5"/>
+        </svg>
+      </span>
+      <span class="brand-copy">
+        <strong>WasteWatch</strong>
+        <small>INDUSTRIAL FIELD IoT</small>
+      </span>
+    </a>
+
+    <div class="sidebar-label">WORKSPACE</div>
+    <nav class="nav-list">
+      <a class="nav-item active" href="#overview">
+        <span class="nav-icon">◫</span>
+        <span>Overview</span>
+        <span class="nav-badge" id="sidebarAlertCount">0</span>
+      </a>
+      <a class="nav-item" href="#sensors">
+        <span class="nav-icon">⌁</span>
+        <span>Sensors</span>
+      </a>
+      <a class="nav-item" href="#locations">
+        <span class="nav-icon">◎</span>
+        <span>GPS Locations</span>
+      </a>
+      <a class="nav-item" href="#charts">
+        <span class="nav-icon">◻</span>
+        <span>Charts</span>
+      </a>
+      <a class="nav-item" href="#alerts-section">
+        <span class="nav-icon">△</span>
+        <span>Alerts</span>
+      </a>
+      <a class="nav-item" href="#console-section">
+        <span class="nav-icon">▤</span>
+        <span>Serial Console</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-label sidebar-label-lower">PROJECT</div>
+    <div class="project-card">
+      <span class="project-pulse" id="sidebarPulse"></span>
+      <div>
+        <strong>Smart Waste System</strong>
+        <small>B1 → LoRa 433 MHz → B2 → USB</small>
+      </div>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="seq-row"><span class="mono">SEQ#</span><strong id="sidebarSeq">—</strong></div>
+      <div class="rssi-row">
+        <span class="mono">RSSI</span><strong id="sidebarRssi">— dBm</strong>
+        <span class="mono">SNR</span><strong id="sidebarSnr">— dB</strong>
+      </div>
+      <div class="user-row">
+        <div class="user-avatar">B2</div>
+        <div class="user-copy">
+          <strong>Gateway Node</strong>
+          <small id="sidebarStatus">Not connected</small>
+        </div>
+        <span class="user-dot" id="sfDot"></span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main-content" id="overview">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="breadcrumb"><span>WORKSPACE</span><b>/</b><strong>Overview</strong></div>
+      <div class="topbar-right">
+        <div class="clock-wrap">
+          <span class="clock-dot" id="clockDot"></span>
+          <span id="localClock">--:--:--</span>
+          <span class="clock-sep"></span>
+          <span id="localDate">--</span>
+        </div>
+        <button class="btn btn-quiet" id="demoBtn" type="button"><span class="btn-spark">✦</span> Try demo</button>
+        <button class="btn btn-primary" id="connectBtn" type="button"><span class="btn-plug">⌁</span> Connect B2 USB</button>
+        <button class="btn btn-danger hidden" id="disconnectBtn" type="button">Disconnect</button>
+      </div>
+    </header>
+
+    <!-- PAGE HEADING -->
+    <section class="page-heading">
+      <div>
+        <div class="eyebrow"><span class="eyebrow-line"></span>SMART WASTE COLLECTION NETWORK</div>
+        <h1>Waste intelligence,<br><span>at a glance.</span></h1>
+        <p class="page-sub">Industrial real-time telemetry from your two-node waste monitoring system.</p>
+      </div>
+      <div class="conn-status-box" id="connStatusBox">
+        <div class="conn-status" id="connStatus">
+          <span class="conn-dot" id="connDot"></span>
+          <span id="connLabel">NOT CONNECTED</span>
+        </div>
+        <div class="conn-hint" id="connHint">Connect the B2 Mega by USB to receive live telemetry.</div>
+      </div>
+    </section>
+
+    <!-- ALERT BANNER -->
+    <div class="alert-banner hidden" id="alertBanner" role="alert">
+      <span class="alert-banner-icon" id="alertBannerIcon">⚠</span>
+      <div class="alert-banner-copy">
+        <strong id="alertBannerTitle">ALERT</strong>
+        <span id="alertBannerDesc">—</span>
+      </div>
+      <span class="alert-banner-time" id="alertBannerTime">—</span>
+    </div>
+
+    <!-- LINK STRIP -->
+    <section class="link-strip">
+      <div class="link-node node-b1">
+        <span class="node-chip chip-blue">B1</span>
+        <div><strong>Sensor Node</strong><small>GPS · DHT22 · MQ-2 · HC-SR04</small></div>
+      </div>
+      <div class="link-bridge">
+        <span class="bridge-line"></span>
+        <span class="bridge-chip"><span class="bridge-dot" id="bridgeDot"></span>LoRa 433 MHz · SF9</span>
+        <span class="bridge-line"></span>
+      </div>
+      <div class="link-node link-node-right">
+        <div><strong>Gateway Node</strong><small>GPS · LCD · USB uplink</small></div>
+        <span class="node-chip chip-cyan">B2</span>
+      </div>
+    </section>
+
+    <!-- KPI ROW -->
+    <section class="kpi-grid" id="sensors">
+      <!-- Fill Level Gauge -->
+      <article class="kpi-card kpi-fill">
+        <div class="kpi-top">
+          <span class="kpi-label">FILL LEVEL</span>
+          <span class="kpi-icon icon-blue">⬤</span>
+        </div>
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" viewBox="0 0 120 70" aria-hidden="true">
+            <path class="gauge-track" d="M10,65 A50,50 0 0,1 110,65" fill="none" stroke="#1e293b" stroke-width="10" stroke-linecap="round" />
+            <path class="gauge-fill" id="gaugeFill" d="M10,65 A50,50 0 0,1 110,65" fill="none" stroke="#3b82f6" stroke-width="10" stroke-linecap="round" stroke-dasharray="157" stroke-dashoffset="157" />
+          </svg>
+          <div class="gauge-center">
+            <span class="gauge-value" id="fillValue">—</span>
+            <small>%</small>
+          </div>
+        </div>
+        <div class="kpi-foot">
+          <span class="kpi-state" id="fillState">HC-SR04 ultrasonic</span>
+          <span class="kpi-tag">B1</span>
+        </div>
+        <div class="kpi-accent accent-fill" id="fillAccent"></div>
+      </article>
+
+      <!-- Temperature -->
+      <article class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-label">TEMPERATURE</span>
+          <span class="kpi-icon icon-amber">↑</span>
+        </div>
+        <div class="kpi-value"><span id="tempValue">--.-</span><small>°C</small></div>
+        <div class="kpi-foot">
+          <span class="kpi-state" id="tempState">DHT22 / AM2303</span>
+          <span class="kpi-tag">B1</span>
+        </div>
+        <div class="kpi-accent accent-amber"></div>
+      </article>
+
+      <!-- Humidity -->
+      <article class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-label">HUMIDITY</span>
+          <span class="kpi-icon icon-cyan">≋</span>
+        </div>
+        <div class="kpi-value"><span id="humValue">--.-</span><small>%</small></div>
+        <div class="kpi-foot">
+          <span class="kpi-state" id="humState">Relative humidity</span>
+          <span class="kpi-tag">B1</span>
+        </div>
+        <div class="kpi-accent accent-cyan"></div>
+      </article>
+
+      <!-- Gas -->
+      <article class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-label">GAS SENSOR</span>
+          <span class="kpi-icon icon-purple">⌬</span>
+        </div>
+        <div class="kpi-value"><span id="gasValue">---</span><small>ADC</small></div>
+        <div class="kpi-foot">
+          <span class="kpi-state" id="gasState">MQ-2 raw · 0–1023</span>
+          <span class="dout-pill" id="doutPill">DOUT —</span>
+        </div>
+        <div class="kpi-accent accent-purple"></div>
+      </article>
+
+      <!-- Distance -->
+      <article class="kpi-card kpi-dist">
+        <div class="kpi-top">
+          <span class="kpi-label">DISTANCE</span>
+          <span class="kpi-icon icon-white">⇡</span>
+        </div>
+        <div class="kpi-value"><span id="distValue">--.-</span><small>cm</small></div>
+        <div class="kpi-foot">
+          <span class="kpi-state" id="distState">HC-SR04 echo distance</span>
+          <span class="kpi-tag">B1</span>
+        </div>
+        <div class="kpi-accent accent-white"></div>
+      </article>
+
+      <!-- RSSI -->
+      <article class="kpi-card kpi-rssi">
+        <div class="kpi-top">
+          <span class="kpi-label">RF SIGNAL</span>
+          <span class="kpi-icon icon-blue">◉</span>
+        </div>
+        <div class="kpi-value rssi-val"><span id="rssiValue">—</span><small>dBm</small></div>
+        <div class="snr-row"><span class="mono">SNR</span><strong id="snrValue">—</strong><small>dB</small></div>
+        <div class="kpi-foot">
+          <span class="kpi-state" id="rssiState">LoRa RF link quality</span>
+          <span class="kpi-tag">B2</span>
+        </div>
+        <div class="kpi-accent accent-blue"></div>
+      </article>
+    </section>
+
+    <!-- FIELD VIEW HEADING -->
+    <div class="section-row section-row-top">
+      <div>
+        <div class="section-kicker">FIELD VIEW</div>
+        <h2>Location &amp; network</h2>
+      </div>
+      <div class="section-meta">
+        <span class="live-dot" id="liveDot"></span>
+        <span id="lastUpdateText">No telemetry received</span>
+      </div>
+    </div>
+
+    <!-- MAP + NETWORK -->
+    <section class="mid-grid" id="locations">
+      <!-- MAP PANEL (SINGLE GOOGLE MAP WITH DUAL B1 + B2 PINS) -->
+      <article class="panel map-panel">
+        <div class="panel-header map-header">
+          <div>
+            <div class="panel-title-line">
+              <span class="panel-icon">◎</span>
+              <h3>Google Maps — Field Tracking</h3>
+            </div>
+            <p class="panel-sub">Live location of B1 Sensor &amp; B2 Gateway on a single Google Map</p>
+          </div>
+          <div class="map-legend-pills">
+            <span class="map-legend-pill pill-blue"><span class="leg-dot ld-blue"></span>B1 Sensor</span>
+            <span class="map-legend-pill pill-cyan"><span class="leg-dot ld-cyan"></span>B2 Gateway</span>
+            <span class="map-fix-chip" id="mapFixChip">GPS NOT FIXED</span>
+            <button class="map-key-btn" id="gmapsKeyBtn" type="button" title="Set Google Maps API Key">⚙ API Key</button>
+          </div>
+        </div>
+
+        <div class="map-view" id="mapView">
+          <!-- Official Google Maps Platform container (fixed size) -->
+          <div id="googleMap"></div>
+
+          <div class="map-placeholder" id="mapPlaceholder">
+            <span class="map-ph-icon">◎</span>
+            <strong>Waiting for GPS fix</strong>
+            <small>Live pins appear when B1 or B2 reports a valid GPS fix.</small>
+          </div>
+
+          <div class="map-overlay-top">
+            <span class="map-tag" id="mapTag"><span class="map-tag-dot"></span>LIVE · DUAL NODES (B1 + B2)</span>
+          </div>
+
+          <div class="map-overlay-bottom">
+            <div class="map-coord-block">
+              <span class="coord-label">B1 COORDS</span>
+              <strong><span id="mapB1Lat">—</span>, <span id="mapB1Lon">—</span></strong>
+            </div>
+            <div class="map-coord-block">
+              <span class="coord-label">B2 COORDS</span>
+              <strong><span id="mapB2Lat">—</span>, <span id="mapB2Lon">—</span></strong>
+            </div>
+            <div class="map-coord-block">
+              <span class="coord-label">SATELLITES</span>
+              <strong>B1:<span id="mapB1Sats">0</span> | B2:<span id="mapB2Sats">0</span></strong>
+            </div>
+            <div class="map-coord-block" id="mapDistBlock">
+              <span class="coord-label">DISTANCE</span>
+              <strong style="color: #60a5fa;"><span id="mapDistVal">—</span></strong>
+            </div>
+            <a class="map-link" id="openMapLink" href="https://maps.google.com/" target="_blank" rel="noopener">Open Google Maps ↗</a>
+          </div>
+        </div>
+
+        <div class="map-foot">
+          <span><span class="fd blue-fd"></span>B1 sensor node</span>
+          <span><span class="fd cyan-fd"></span>B2 gateway node</span>
+          <span class="map-foot-note" id="mapFootNote">Google Maps Platform · Live Dual-Node Tracking</span>
+        </div>
+      </article>
+
+      <!-- NETWORK PANEL -->
+      <article class="panel net-panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title-line"><span class="panel-icon">⌁</span>
+              <h3>Network Health</h3>
+            </div>
+            <p class="panel-sub">Bidirectional LoRa RF link status</p>
+          </div>
+          <span class="net-mode-chip" id="netModeChip">STANDBY</span>
+        </div>
+
+        <div class="net-visual">
+          <div class="net-node net-left">
+            <div class="net-icon net-icon-b1">B1</div>
+            <strong>Sensor node</strong>
+            <small id="b1NodeState">Waiting for packet</small>
+            <span class="online-badge" id="b1Badge"><i></i>OFFLINE</span>
+          </div>
+          <div class="net-link">
+            <span class="net-link-line" id="netLinkLine"><i class="pkt pkt1"></i><i class="pkt pkt2"></i></span>
+            <div class="net-link-label">LoRa SF9</div>
+            <div class="net-link-sub" id="lastPktAge">No packets</div>
+          </div>
+          <div class="net-node net-right">
+            <div class="net-icon net-icon-b2">B2</div>
+            <strong>Gateway node</strong>
+            <small id="b2NodeState">USB not connected</small>
+            <span class="online-badge" id="b2Badge"><i></i>OFFLINE</span>
+          </div>
+        </div>
+
+        <div class="net-stats">
+          <div class="net-stat">
+            <span class="net-stat-label">ACK STATUS</span>
+            <strong id="ackStatus">—</strong>
+            <small id="ackSeq">No ACK yet</small>
+          </div>
+          <div class="net-stat">
+            <span class="net-stat-label">B1 STATUS</span>
+            <strong id="b1Status">WAITING</strong>
+            <small id="b1StatusSub">No packet received</small>
+          </div>
+          <div class="net-stat">
+            <span class="net-stat-label">FILL ALERT</span>
+            <strong id="fillAlertNet">UNKNOWN</strong>
+            <small id="fillAlertSub">—</small>
+          </div>
+          <div class="net-stat">
+            <span class="net-stat-label">GAS ALERT</span>
+            <strong id="gasAlertNet">UNKNOWN</strong>
+            <small id="gasAlertSub">—</small>
+          </div>
+        </div>
+
+        <div class="net-note">
+          <span class="note-i">i</span>
+          <p>B2 USB serial is the uplink. B2 forwards B1 LoRa packets via USB. Only B2 needs to be connected to the laptop.</p>
+        </div>
+      </article>
+    </section>
+
+    <!-- CHARTS HEADING -->
+    <div class="section-row" id="charts">
+      <div>
+        <div class="section-kicker">SENSOR TRENDS</div>
+        <h2>Historical readings</h2>
+      </div>
+      <div class="section-meta"><span class="status-pill">LAST 30 SAMPLES</span></div>
+    </div>
+
+    <!-- CHARTS GRID -->
+    <section class="charts-grid">
+      <!-- Gas chart -->
+      <article class="panel chart-panel">
+        <div class="panel-header chart-header">
+          <div>
+            <div class="panel-title-line"><span class="panel-icon">⌬</span>
+              <h3>Gas Sensor History</h3>
+            </div>
+            <p class="panel-sub">Raw ADC from MQ-2 · 0–1023</p>
+          </div>
+          <div class="chart-cur"><span>Latest</span><strong id="gasChartLatest">—</strong><small>ADC</small></div>
+        </div>
+        <div class="chart-legend"><span class="leg-dot purple-dot"></span>MQ-2 ADC <span class="threshold-legend" id="gasThreshLegend">Threshold: 400</span></div>
+        <div class="chart-wrap">
+          <svg id="gasChart" viewBox="0 0 640 160" aria-label="Gas history chart">
+            <text x="320" y="82" text-anchor="middle" fill="#64748b" font-size="12">Waiting for gas sensor data…</text>
+          </svg>
+        </div>
+        <div class="chart-foot">
+          <span><span class="fd purple-fd"></span>Raw ADC (not calibrated ppm)</span>
+          <span id="gasSampleCount">0 samples</span>
+        </div>
+      </article>
+
+      <!-- Temp chart -->
+      <article class="panel chart-panel">
+        <div class="panel-header chart-header">
+          <div>
+            <div class="panel-title-line"><span class="panel-icon">↑</span>
+              <h3>Temperature History</h3>
+            </div>
+            <p class="panel-sub">DHT22 in °C</p>
+          </div>
+          <div class="chart-cur"><span>Latest</span><strong id="tempChartLatest">—</strong><small>°C</small></div>
+        </div>
+        <div class="chart-legend"><span class="leg-dot amber-dot"></span>Temperature °C <span class="threshold-legend" id="tempThreshLegend">Threshold: 35°C</span></div>
+        <div class="chart-wrap">
+          <svg id="tempChart" viewBox="0 0 640 160" aria-label="Temperature history chart">
+            <text x="320" y="82" text-anchor="middle" fill="#64748b" font-size="12">Waiting for temperature data…</text>
+          </svg>
+        </div>
+        <div class="chart-foot">
+          <span><span class="fd amber-fd"></span>Temperature from AM2303 sensor</span>
+          <span id="tempSampleCount">0 samples</span>
+        </div>
+      </article>
+
+      <!-- Fill chart -->
+      <article class="panel chart-panel">
+        <div class="panel-header chart-header">
+          <div>
+            <div class="panel-title-line"><span class="panel-icon">⬤</span>
+              <h3>Fill Level History</h3>
+            </div>
+            <p class="panel-sub">Bin fill % from HC-SR04</p>
+          </div>
+          <div class="chart-cur"><span>Latest</span><strong id="fillChartLatest">—</strong><small>%</small></div>
+        </div>
+        <div class="chart-legend"><span class="leg-dot blue-dot"></span>Fill level % <span class="threshold-legend">Warning: 80% · Critical: 95%</span></div>
+        <div class="chart-wrap">
+          <svg id="fillChart" viewBox="0 0 640 160" aria-label="Fill level history chart">
+            <text x="320" y="82" text-anchor="middle" fill="#64748b" font-size="12">Waiting for fill level data…</text>
+          </svg>
+        </div>
+        <div class="chart-foot">
+          <span><span class="fd blue-fd"></span>Calculated from HC-SR04 distance</span>
+          <span id="fillSampleCount">0 samples</span>
+        </div>
+      </article>
+    </section>
+
+    <!-- ALERTS + THRESHOLDS HEADING -->
+    <div class="section-row" id="alerts-section">
+      <div>
+        <div class="section-kicker">EVENTS &amp; CONFIGURATION</div>
+        <h2>Alerts &amp; thresholds</h2>
+      </div>
+      <div class="section-meta">
+        <span class="alert-count-badge"><span class="alert-count-dot"></span><strong id="activeAlertCount">0</strong> active</span>
+        <button class="text-btn" id="clearAlertsBtn" type="button">Clear history</button>
+      </div>
+    </div>
+
+    <section class="alerts-grid">
+      <!-- Alert log -->
+      <article class="panel alerts-panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title-line"><span class="panel-icon alert-pi">△</span>
+              <h3>Alert Log</h3>
+            </div>
+            <p class="panel-sub">Evaluated from incoming telemetry</p>
+          </div>
+          <span class="status-pill" id="alertPillCount">0 ENTRIES</span>
+        </div>
+        <div id="alertsList" class="alerts-list">
+          <div class="empty-state"><span class="empty-icon">✓</span><strong>No active alerts</strong><small>Connect B2 or try demo mode.</small></div>
+        </div>
+      </article>
+
+      <!-- Threshold configurator -->
+      <article class="panel thresh-panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title-line"><span class="panel-icon">⚙</span>
+              <h3>Alert Thresholds</h3>
+            </div>
+            <p class="panel-sub">Local warning rules (independent of firmware)</p>
+          </div>
+        </div>
+        <div class="thresh-row">
+          <div class="thresh-sym sym-purple">⌬</div>
+          <div class="thresh-copy"><strong>Gas ADC high</strong><small>Raw MQ-2 analog reading</small></div>
+          <label class="thresh-input"><input id="gasThreshInput" type="number" min="0" max="1023" value="400" aria-label="Gas threshold" /><span>ADC</span></label>
+        </div>
+        <div class="thresh-row">
+          <div class="thresh-sym sym-amber">°</div>
+          <div class="thresh-copy"><strong>Temperature high</strong><small>DHT22 degrees Celsius</small></div>
+          <label class="thresh-input"><input id="tempThreshInput" type="number" min="-40" max="80" value="35" aria-label="Temp threshold" /><span>°C</span></label>
+        </div>
+        <div class="thresh-row">
+          <div class="thresh-sym sym-cyan">≋</div>
+          <div class="thresh-copy"><strong>Humidity high</strong><small>Relative humidity percent</small></div>
+          <label class="thresh-input"><input id="humThreshInput" type="number" min="0" max="100" value="80" aria-label="Humidity threshold" /><span>%</span></label>
+        </div>
+        <div class="thresh-row">
+          <div class="thresh-sym sym-amber">⬤</div>
+          <div class="thresh-copy"><strong>Fill warning</strong><small>Bin fill percent warning level</small></div>
+          <label class="thresh-input"><input id="fillWarnInput" type="number" min="0" max="100" value="80" aria-label="Fill warning threshold" /><span>%</span></label>
+        </div>
+        <div class="thresh-row">
+          <div class="thresh-sym sym-red">⬤</div>
+          <div class="thresh-copy"><strong>Fill critical</strong><small>Bin fill percent critical level</small></div>
+          <label class="thresh-input"><input id="fillCritInput" type="number" min="0" max="100" value="95" aria-label="Fill critical threshold" /><span>%</span></label>
+        </div>
+        <button class="btn btn-secondary btn-wide" id="applyThreshBtn" type="button">Apply thresholds <span>→</span></button>
+        <p class="thresh-help">Gas ADC values are raw counts, not calibrated ppm. Calibrate the MQ-2 sensor for safety-critical operations.</p>
+      </article>
+    </section>
+
+    <!-- TELEMETRY TABLE HEADING -->
+    <div class="section-row">
+      <div>
+        <div class="section-kicker">DATA LOG</div>
+        <h2>Recent telemetry</h2>
+      </div>
+      <div class="section-meta"><span class="status-pill" id="telemetryCount">0 RECORDS</span><button class="text-btn" id="exportCsvBtn" type="button">Export CSV ↓</button></div>
+    </div>
+
+    <section class="panel table-panel">
+      <div class="table-wrap">
+        <table class="tel-table">
+          <thead>
+            <tr>
+              <th>SEQ</th>
+              <th>TEMP</th>
+              <th>HUM</th>
+              <th>GAS</th>
+              <th>DIST</th>
+              <th>FILL%</th>
+              <th>FILL ALERT</th>
+              <th>ALERT</th>
+              <th>GPS</th>
+              <th>RSSI</th>
+              <th>TIME</th>
+            </tr>
+          </thead>
+          <tbody id="telTableBody">
+            <tr class="table-empty">
+              <td colspan="11">No telemetry records yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- CONSOLE SECTION -->
+    <div class="section-row" id="console-section">
+      <div>
+        <div class="section-kicker">DEVELOPER TOOLS</div>
+        <h2>Serial console</h2>
+      </div>
+      <div class="section-meta"><span class="baud-pill"><span class="baud-dot"></span>9600 baud · USB serial</span><button class="text-btn" id="clearConsoleBtn" type="button">Clear</button></div>
+    </div>
+
+    <section class="panel console-panel">
+      <div class="console-topbar">
+        <div class="console-tab"><span class="console-tab-dot"></span>B2 USB STREAM <span class="console-mode-chip" id="consoleModeChip">WAITING</span></div>
+        <div class="console-actions"><span>LOCAL ONLY</span><button id="copyConsoleBtn" type="button">Copy output ↗</button></div>
+      </div>
+      <div class="console-body" id="consoleOutput" role="log" aria-live="polite"></div>
+      <div class="console-foot"><span><i class="foot-led" id="footLed"></i><span id="consoleFootStatus">Not connected</span></span><span id="consoleLineCount">0 lines</span></div>
+    </section>
+
+    <footer class="app-footer">
+      <div><span class="footer-mark">W</span><strong>WasteWatch</strong><span>Smart Waste Bin System · Arduino Mega 2560 · LoRa 433 MHz</span></div>
+      <div class="footer-right"><span>Industrial IoT Dashboard</span><span class="ver-pill">BUILD 3.0</span></div>
+    </footer>
+
+  </main>
+</div>
+
+<div id="toastRegion" class="toast-region" aria-live="polite"></div>
+
+<!-- Official Google Maps SDK is loaded asynchronously in app.js -->
+<script src="app.js"></script>
+</body>
+</html>
